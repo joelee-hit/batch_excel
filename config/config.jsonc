@@ -1,0 +1,6 @@
+{
+    "比较两个表格": {
+        "func": "compare",
+        "config": "config/config_compare.jsonc"
+    }
+}

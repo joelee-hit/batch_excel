@@ -1,0 +1,8 @@
+__pycache__
+data
+log
+build
+dist
+*.spec
+tmp
+config/.gitignore
