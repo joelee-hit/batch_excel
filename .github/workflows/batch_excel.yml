@@ -1,0 +1,92 @@
+name: batch excel tool
+# 怎么触发? 
+# 1. 确保 git status 是干净的(也已经 git push origin main)
+# 2. 查看当前所有tag, git tag -l
+# 3. 创建本地新tag, git tag v1.0.1
+# 4. 将该新tag推送到仓库, git push origin v1.0.1
+# 5. 上 github.com 查看 github action 是否工作
+# 怎么删除?
+# 1. 上 github.com 将相应的 tag 和 release 删掉
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:      
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: main
+      - name: Set up Python 3.10 
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies 
+        run: |
+          python -m pip install --upgrade pip
+          if (Test-Path -Path requirements.txt) {
+              pip install -r requirements.txt;
+          }
+      - name: Run pack.py 
+        run: |
+          python pack.py
+      - name: Rename directory 
+        run: |
+          if (Test-Path -Path dist/batch_excel) {
+              Rename-Item -Path dist/batch_excel -NewName batch_excel_win
+          }
+      - name: Compress artifact for Windows 
+        run: |
+          Compress-Archive -Path dist/batch_excel_win -DestinationPath dist/batch_excel_win.zip
+      - name: Upload packaged artifacts to Release 
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/batch_excel_win.zip
+          tag_name: ${{ github.ref_name }}
+          name: "Release ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.ME_GITHUB_TOKEN }}
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:      
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: main
+      - name: Set up Python 3.10 
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies 
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+              pip install -r requirements.txt
+          fi
+      - name: Run pack.py 
+        run: |
+          python pack.py
+      - name: Rename directory 
+        run: |
+          if [ -d dist/batch_excel ]; then
+              mv dist/batch_excel dist/batch_excel_linux
+          fi
+      - name: Compress artifact for Linux 
+        run: |
+          cd dist && tar -czvf batch_excel_linux.tar.gz batch_excel_linux
+      - name: Upload packaged artifacts to Release 
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/batch_excel_linux.tar.gz
+          tag_name: ${{ github.ref_name }}
+          name: "Release ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.ME_GITHUB_TOKEN }}

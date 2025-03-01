@@ -1,0 +1,7 @@
+pandas
+json5
+numpy
+PyQt5
+PyInstaller
+pyinstaller_hooks_contrib
+openpyxl
